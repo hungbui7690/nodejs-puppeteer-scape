@@ -1,5 +1,10 @@
-const puppeteer = require('puppeteer')
+const puppeteer = require('puppeteer-extra')
+const pluginStealth = require('puppeteer-extra-plugin-stealth')
+const { executablePath } = require('puppeteer')
 const fs = require('fs')
+
+// use stealth
+puppeteer.use(pluginStealth())
 
 const scrapeData = async () => {
   const browser = await puppeteer.launch({ headless: false })

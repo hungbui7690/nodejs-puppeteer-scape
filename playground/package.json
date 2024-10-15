@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon app.js"
   },
   "keywords": [],
@@ -12,10 +11,17 @@
   "description": "",
   "dependencies": {
     "dotenv": "^16.4.5",
+    "html-to-text": "^9.0.5",
     "nodemon": "^3.1.7",
-    "playwright": "^1.48.0",
+    "proxifly": "^2.0.2",
+    "proxy-chain": "^2.5.3",
     "puppeteer": "^23.5.2",
     "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
     "puppeteer-extra-plugin-user-preferences": "^2.4.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@types/node": "^22.7.5"
   }
 }

@@ -26,12 +26,12 @@ const scrapeData = async () => {
   const page = await browser.newPage()
 
   await page.goto(
-    'https://metruyencv.com/truyen/mu-hop-mo-ra-co-nho-the-gioi/chuong-1',
+    'https://metruyencv.com/truyen/vu-luyen-dien-phong/chuong-951',
     {
       waitUntil: 'domcontentloaded',
     }
   )
-  let count = 1653
+  let count = 951
 
   // **************** LOGIN ****************
   const hamburger = await page.$('button[data-x-bind="OpenModal(\'menu\')"]')

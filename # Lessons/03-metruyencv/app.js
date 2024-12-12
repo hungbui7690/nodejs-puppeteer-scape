@@ -40,13 +40,19 @@ const scrapeData = async () => {
   const browser = await puppeteer.launch({ headless: false })
   const page = await browser.newPage()
 
-  await page.goto(
-    'https://metruyencv.com/truyen/vu-luyen-dien-phong/chuong-3292',
-    {
-      waitUntil: 'domcontentloaded',
-    }
-  )
-  let count = 3292
+  // Hollywood Truyền Kỳ Đạo Diễn
+  // https://metruyencv.com/truyen/hollywood-truyen-ky-dao-dien/chuong-1
+
+  // Ta Chỉ Muốn An Tĩnh Chơi Game
+  // https://metruyencv.com/truyen/ta-chi-muon-an-tinh-choi-game/chuong-1
+
+  // ·
+  const url =
+    'https://metruyencv.com/truyen/ta-chi-muon-an-tinh-lam-cau-dao-ben-trong-nguoi/chuong-1440'
+  await page.goto(url, {
+    waitUntil: 'domcontentloaded',
+  })
+  let count = +url.slice(url.lastIndexOf('-') + 1)
 
   // **************** LOGIN ****************
   const hamburger = await page.$('button[data-x-bind="OpenModal(\'menu\')"]')
@@ -72,26 +78,24 @@ const scrapeData = async () => {
 
   while (await page.$('button[data-x-bind="GoNext"]')) {
     try {
-      await page.waitForNetworkIdle({ idleTime: 2000 })
+      console.log('0')
+      // await page.waitForNetworkIdle({ idleTime: 1000 })
+      console.log('1')
       const textContent = await page.evaluate(() => {
-        console.log('1')
         const title = document.querySelector('h2')?.textContent + '\n\n'
-        console.log('2')
         const content =
           document.querySelector('#chapter-detail')?.innerText + '\n\n\n\n\n\n'
-        console.log('3')
         return { title, content }
       })
+      console.log('2')
       // console.log(textContent.content)
-      console.log('4')
-      console.log(textContent.title)
+      console.log(count, textContent.title)
       fileTitle = Math.floor(count / 50) + 1
-      console.log('5')
       fs.writeFileSync(`./${fileTitle}.txt`, textContent.title, { flag: 'a' })
       fs.writeFileSync(`./${fileTitle}.txt`, textContent.content, {
         flag: 'a',
       })
-      console.log('6')
+
       logger.info(`Scraped ${fileTitle}.txt - ${textContent.title}`)
     } catch (error) {
       logger.error(new Error('Error while scraping'))
@@ -100,12 +104,12 @@ const scrapeData = async () => {
 
     const nextButton = await page.$('button[data-x-bind="GoNext"]')
     await nextButton?.click()
-    await page.waitForNavigation()
+    await page.waitForNavigation({ waitUntil: 'networkidle0' })
 
     count++
   }
 
-  // await browser.close()
+  await browser.close()
 }
 
 scrapeData()

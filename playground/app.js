@@ -1,26 +1,10 @@
-/*
-  Prevent Password Manager 
-  - to disable password manager or password changes warning in puppeteer -> use puppeteer-extra
-    -> npm install puppeteer-extra puppeteer-extra-plugin-user-preferences
-
-
-*/
-
-require('dotenv').config()
 const puppeteer = require('puppeteer-extra')
-const fs = require('fs')
+const pluginStealth = require('puppeteer-extra-plugin-stealth')
 const winston = require('winston')
+const { executablePath } = require('puppeteer')
+const fs = require('fs')
 
-puppeteer.use(
-  require('puppeteer-extra-plugin-user-preferences')({
-    userPrefs: {
-      safebrowsing: {
-        enabled: false,
-        enhanced: false,
-      },
-    },
-  })
-)
+puppeteer.use(pluginStealth())
 
 const logger = winston.createLogger({
   level: 'info',
@@ -40,72 +24,52 @@ const scrapeData = async () => {
   const browser = await puppeteer.launch({ headless: false })
   const page = await browser.newPage()
 
-  await page.goto(
-    'https://metruyencv.com/truyen/vu-luyen-dien-phong/chuong-3292',
-    {
-      waitUntil: 'domcontentloaded',
-    }
-  )
-  let count = 3292
+  // ·
+  const url = 'https://truyenyy.app/truyen/han-ngu-chi-ruc-ro/chuong-1.html'
+  await page.goto(url, {
+    waitUntil: 'domcontentloaded',
+  })
 
-  // **************** LOGIN ****************
-  const hamburger = await page.$('button[data-x-bind="OpenModal(\'menu\')"]')
-  await hamburger.click()
-
-  const loginButton = await page.$('button[data-x-bind="OpenModal(\'login\')"]')
-  await loginButton.click()
-
-  // enter email and password -> then submit
-  const emailInput = await page.$('input[data-x-model="form.email"]')
-  const passwordInput = await page.$('input[data-x-model="form.password"]')
-  await emailInput.type(process.env.EMAIL)
-  await passwordInput.type(process.env.PASSWORD)
-  await page.waitForNetworkIdle()
-  await page.keyboard.press('Tab')
-  await page.keyboard.press('Enter')
-  await page.waitForNetworkIdle()
-  await page.$eval('button[data-x-bind="CloseModal"]', (el) => el.click())
-
-  // ********************************
+  let count = +url.slice(url.lastIndexOf('-') + 1, url.lastIndexOf('.html'))
+  console.log(count)
 
   let fileTitle = ''
 
-  while (await page.$('button[data-x-bind="GoNext"]')) {
+  while (await page.$('.weui-btn_primary')) {
     try {
-      await page.waitForNetworkIdle({ idleTime: 2000 })
+      await page.waitForNetworkIdle()
       const textContent = await page.evaluate(() => {
-        console.log('1')
-        const title = document.querySelector('h2')?.textContent + '\n\n'
-        console.log('2')
+        const title =
+          document.querySelector('.chap-title > span')?.innerText + '\n\n'
         const content =
-          document.querySelector('#chapter-detail')?.innerText + '\n\n\n\n\n\n'
-        console.log('3')
+          document.querySelector('#inner_chap_content_1')?.innerText +
+          '\n\n\n\n\n\n'
+
         return { title, content }
       })
-      // console.log(textContent.content)
-      console.log('4')
-      console.log(textContent.title)
+
       fileTitle = Math.floor(count / 50) + 1
-      console.log('5')
+
       fs.writeFileSync(`./${fileTitle}.txt`, textContent.title, { flag: 'a' })
-      fs.writeFileSync(`./${fileTitle}.txt`, textContent.content, {
-        flag: 'a',
+      fs.writeFileSync(`./${fileTitle}.txt`, textContent.content, { flag: 'a' })
+
+      const link = await page.$('.weui-btn_primary')
+      const newURL = await link?.evaluate((el) => el.getAttribute('href'))
+      await page.goto(`https://truyenyy.vip${newURL}`, {
+        waitUntil: 'domcontentloaded',
       })
-      console.log('6')
-      logger.info(`Scraped ${fileTitle}.txt - ${textContent.title}`)
+
+      console.log(count, textContent.title)
+
+      count++
     } catch (error) {
       logger.error(new Error('Error while scraping'))
       await page.reload()
     }
-
-    const nextButton = await page.$('button[data-x-bind="GoNext"]')
-    await nextButton?.click()
-    await page.waitForNavigation()
-
-    count++
   }
 
-  // await browser.close()
+  await browser.close()
 }
 
 scrapeData()
+//

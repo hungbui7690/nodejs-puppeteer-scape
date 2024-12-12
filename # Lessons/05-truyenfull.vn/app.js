@@ -1,10 +1,18 @@
+require('dotenv').config()
 const puppeteer = require('puppeteer-extra')
-const pluginStealth = require('puppeteer-extra-plugin-stealth')
-const winston = require('winston')
-const { executablePath } = require('puppeteer')
 const fs = require('fs')
+const winston = require('winston')
 
-puppeteer.use(pluginStealth())
+puppeteer.use(
+  require('puppeteer-extra-plugin-user-preferences')({
+    userPrefs: {
+      safebrowsing: {
+        enabled: false,
+        enhanced: false,
+      },
+    },
+  })
+)
 
 const logger = winston.createLogger({
   level: 'info',
@@ -24,27 +32,26 @@ const scrapeData = async () => {
   const browser = await puppeteer.launch({ headless: false })
   const page = await browser.newPage()
 
-  // ·
   const url =
-    'https://truyenyy.app/truyen/han-ngu-chi-chuong-khong-tinh-quang/chuong-18.html'
+    'https://truyenwikidich.net/truyen/do-thi-hat-giong-vuong/chuong-1-khong-thuan-y-nhan-sinh-WHY8I6rYUDL4FDZ%7E'
   await page.goto(url, {
     waitUntil: 'domcontentloaded',
   })
 
-  let count = +url.slice(url.lastIndexOf('-') + 1, url.lastIndexOf('.html'))
-  console.log(count)
-
+  let count = url.split('/').at(5).split('-').at(1)
   let fileTitle = ''
 
-  while (await page.$('.weui-btn_primary')) {
+  await page.waitForNetworkIdle()
+
+  while (await page.$('.top-bar.ankhito > p.center > a:last-child')) {
     try {
       await page.waitForNetworkIdle()
       const textContent = await page.evaluate(() => {
         const title =
-          document.querySelector('.chap-title > span')?.innerText + '\n\n'
+          document.querySelector('#bookContent > p.book-title:nth-child(2) ')
+            ?.innerText + '\n\n'
         const content =
-          document.querySelector('#inner_chap_content_1')?.innerText +
-          '\n\n\n\n\n\n'
+          document.querySelector('#bookContentBody')?.innerText + '\n\n\n\n\n\n'
 
         return { title, content }
       })
@@ -54,17 +61,15 @@ const scrapeData = async () => {
       fs.writeFileSync(`./${fileTitle}.txt`, textContent.title, { flag: 'a' })
       fs.writeFileSync(`./${fileTitle}.txt`, textContent.content, { flag: 'a' })
 
-      const link = await page.$('.weui-btn_primary')
+      const link = await page.$('.top-bar.ankhito > p.center > a:last-child')
       const newURL = await link?.evaluate((el) => el.getAttribute('href'))
-      await page.goto(`https://truyenyy.vip${newURL}`, {
+      await page.goto(`https://truyenwikidich.net${newURL}`, {
         waitUntil: 'domcontentloaded',
       })
 
-      console.log(count, textContent.title)
-
       count++
     } catch (error) {
-      logger.error(new Error('Error while scraping'))
+      console.log(error)
       await page.reload()
     }
   }
@@ -73,4 +78,3 @@ const scrapeData = async () => {
 }
 
 scrapeData()
-//
